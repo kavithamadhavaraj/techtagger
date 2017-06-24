@@ -1,3 +1,4 @@
+//Loads the spreadsheet data one by one
 function showNext(data,url1){
   var spreadsheet=SpreadsheetApp.openByUrl(url1);
   var range=spreadsheet.getRange("A2").getValue();
@@ -5,6 +6,8 @@ function showNext(data,url1){
   if(row=="")   {var rows = spreadsheet.getRange("A"+Math.round(range*1)).setValue(data); 
                      spreadsheet.getRange("A2").setValue(Math.round((range*1)+1));}
 }
+//Get the spreadsheet data one by one, runs every 'n' (configured in source.html) milli seconds
+//Within this time if no action is taken, the same data is shown everytime until some action is taken
 function fetchData(url){
   var spreadsheet=SpreadsheetApp.openByUrl(url);
   var temp=spreadsheet.getRange("A2").getValue();
@@ -17,12 +20,14 @@ function fetchData(url){
   else spreadsheet.getRange("A2").setValue(Math.round((temp*1)+1));
 }
 
+//Main method, loads the 'source' HTML file with title 'Technology Tagger'
 function doGet(){
   var html=HtmlService.createHtmlOutputFromFile("source");
   html.setTitle("Technology Tagger");
   return html;
 }
 
+//Get the userhistory
 function getHistory(){
   var temp=PropertiesService.getUserProperties().getProperty("History");
   if(temp)
@@ -30,8 +35,9 @@ function getHistory(){
   else
     return "No Suggestions Yet !";
 }
+
+//Store the user-specific words in the userhistory
 function store(data){
- //PropertiesService.getUserProperties().deleteAllProperties();
  var temp=PropertiesService.getUserProperties().getProperty("History");
   if (!temp)
     PropertiesService.getUserProperties().setProperty("History",data);
@@ -39,6 +45,7 @@ function store(data){
   PropertiesService.getUserProperties().setProperty("History",temp+","+data);
 }
 
+//Generation of report as a word document in drive
 function generate(data,url,concent){
   var keywords;
   if(data.indexOf(',')) keywords=data.split(',');
