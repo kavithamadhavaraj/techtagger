@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="refresh" content="5">
+<style>
+input[type=checkbox] {
+    zoom:1.5;
+}
+* { overflow: hidden;}
+h1{
+    font-family: 'Impact', Charcoal, sans-serif;
+	font-size: 40px;
+	font-weight: 500;
+	background-color:#58D3F7;
+}
+h4{
+font-size:20px;
+font-weight:normal;
+}
+div{
+margin:0px;
+}
+body{
+background-color:#58ACFA;
+}
+table{
+background-color:#58D3F7;
+padding:20px;
+width:1350px;
+border-radius:40px;
+}
+td{
+border:0px;
+text-align:left;
+padding:0px;
+font-size:20px;
+height:20px;
+}
+
+#reportbut{
+background-color:#FA5882;
+}
+input{
+font-size:16px;
+font-family:'Tahoma', Geneva, sans-serif;
+background-color:#A9F5D0;
+border-radius:40px;
+}
+</style>
+<script>
+var sheetURL="";
+var temp="";
+function sendTags(){
+ var checkboxes = document.getElementsByName("technology");
+ var checkboxesChecked = [];
+ for (var i=0; i<checkboxes.length; i++) {
+     if (checkboxes[i].checked) {
+        checkboxesChecked.push(checkboxes[i].value);
+     }
+  }
+ if(checkboxesChecked.length==0)
+ alert("None is selected !!");
+ else
+ return checkboxesChecked;
+}
+function loadHandler(data){
+if(temp!="<center><h4>["+data[3]+"] "+data[2]+"</h4>"+"<h3>To know more -- <a href='"+data[1]+"'target='_blank'>"+data[1]+"</a></h3>")
+{
+document.getElementById("status_area").style.display="none";
+document.getElementById("data_area").innerHTML="<center><h4>["+data[3]+"] "+data[2]+"</h4>"+"<h3>To know more -- <a href='"+data[1]+"'target='_blank'>"+data[1]+"</a></h3>";
+temp="<center><h4>["+data[3]+"] "+data[2]+"</h4>"+"<h3>To know more -- <a href='"+data[1]+"'target='_blank'>"+data[1]+"</a></h3>";
+var checkboxes = document.getElementsByName("technology");
+for (var i=0; i<checkboxes.length; i++) {
+     checkboxes[i].checked=false;
+ }
+ document.getElementById("customTag").value="";
+}
+else if(data==0)
+{
+document.getElementById("data_area").innerHTML="<center><br/><br/><h3>You have reached the end of the document.! Refresh the page to generate reports / load another file</h3></center>";
+}
+
+document.getElementsByTagName("input").disabled=false;
+}
+function loadData(){
+google.script.run.withSuccessHandler(loadHandler).fetchData(sheetURL);
+setInterval(loadData,15000);
+}
+function takeAction(){
+var data=sendTags();
+data=data.join();
+if(data){
+    document.getElementsByTagName("input").disabled=true;
+    document.getElementById("status_area").style.display="block";
+    document.getElementById("status_area").innerHTML="<br/><br/>Loading... Wait for a moment..!";
+    google.script.run.showNext(data,sheetURL);
+    loadData();
+  }
+}
+function close(){
+document.getElementById('suggest').style.display="none";
+document.getElementById('data_area').style.display="block";
+document.getElementById('tagarea').style.display="none";
+document.getElementById('reportbut').style.display="none";
+document.getElementById('submit').style.display="block";
+document.getElementById('status_area').style.display="block";
+loadData();
+}
+function add(data){
+if(data){
+google.script.run.store(data);
+document.getElementById('tagid').value="";
+document.getElementById('custag').innerHTML+="<input type='checkbox'  name='technology' value='"+data+"'/>"+data;}
+else{
+alert("Field is empty !");}
+}
+function suggestions(data){
+if(data=="No Suggestions Yet !")
+document.getElementById('suggest').innerHTML="<b><br/> Tag Suggestions:  </b>"+ data+ "<br/><br/>";
+else
+{
+var temp=data.split(',');
+for(var i=0;i<temp.length;i++)
+document.getElementById('custag').innerHTML+="<input type='checkbox'  name='technology' value='"+temp[i]+"'/>"+temp[i];
+}
+}
+function load(){
+  sheetURL=document.getElementById("sid").value;
+  document.getElementById('sid').disabled=true;
+  document.getElementById('suggest').style.display="block";
+  google.script.run.withSuccessHandler(suggestions).getHistory();
+  document.getElementById('sbut').style.display="none";
+  document.getElementById('reportbut').style.display="block";
+  document.getElementById('tagarea').style.display="block";
+  document.getElementById('tagArea').style.display="block";
+}
+
+function reportHandler(data){
+ var temp=sendTags();
+ temp=temp.join();
+ if(data=="The document is partially tagged! Do you still wish to continue?"){
+  if(confirm(data)==true){
+   generateReports(1);
+  }
+ }
+ else alert(data); 
+}
+function is_valid_url(url)
+{
+     if(url.match(/^(ht|f)tps?:\/\/[a-z0-9-\.]+\.[a-z]{2,4}\/?([^\s<>\#%"\,\{\}\\|\\\^\[\]`]+)?$/))
+     load();
+     else
+     alert("Invalid URL");
+}
+function generateReports(concent){
+var temp=sendTags();
+temp=temp.join();
+google.script.run.withSuccessHandler(reportHandler).generate(temp,sheetURL,concent);
+}
+
+</script>
+</head>
+<body>
+<center><h1>Horizon Scanning Supportive Tool</h1>
+https://docs.google.com/spreadsheets/d/1ZWNcQVqUTej3ion5p0Llf6XblnXeiwFeQRGvgmianuQ/edit?usp=sharing</center>
+<center><br/>
+<form>
+<input type='text' id='sid' placeholder="URL of the publicly shared spreadsheet..." size='70'/>
+<input type='submit' id='sbut' onclick="is_valid_url(document.getElementById('sid').value)" value='Load spreadsheet !'/><br/><br/>
+</form>
+<div id="tagarea" style="display:none;">
+<form>
+<input type='text'   placeholder="Add your custom tag. Eg:Solar" id='tagid' size='45'/>
+<input type='submit' id='add'  onclick="add(document.getElementById('tagid').value)" value='Save + New'/>
+<input type='submit' id='close'  onclick="close()" value='Close'/><br/>
+</form>
+</div>
+<div id="suggest" style="display:none;" ></div>
+<input type="submit" id='reportbut' name="choices" style="display:none;"  onclick='generateReports(0)' value="Generate Reports"/>
+</center>
+<div align="center" id="status_area" style="display:none;"><br/><br/>Fetching data....!!</div>
+<div id="data_area" style="display:none;"></div>
+<div id="tagArea" style="display:none;">
+<center>
+<form>
+<table border="3"><tr>
+<td align="center" colspan="5">
+<input type="checkbox" name="technology" value="Education">Education
+<input type="checkbox" name="technology" value="Medical Sciences and Healthcare"/>Medical Sciences & Healthcare
+<input type="checkbox"  name="technology" value="Food and Agriculture"/>Food & Agriculture
+<input type="checkbox"  name="technology" value="Water"/>Water
+<input type="checkbox"  name="technology" value="Energy"/>Energy
+<input type="checkbox"  name="technology" value="Habitat"/>Habitat
+<input type="checkbox"  name="technology" value="Environment"/>Environment
+<input type="checkbox"  name="technology" value="Transportation"/>Transportation
+<input type="checkbox"  name="technology" value="Materials"/>Materials
+</td>
+</tr>
+<tr>
+<td colspan="5" align="center">
+<input type="checkbox"  name="technology" value="Infrastructure"/>Infrastructure
+<input type="checkbox"  name="technology" value="Manufacturing"/>Manufacturing
+<input type="checkbox"  name="technology" value="TIFAC Posts"/>TIFAC Posts
+<input type="checkbox"  name="technology" value="Information and Communication Technology ICT"/>Information & Communication Technology
+</td>
+</tr>
+<tr>
+<td colspan="10" id="custag" align="center"></td>
+</tr>
+</table>
+<input type="submit" id="submit" style="display:none;" onclick="takeAction()" name="submit" value="Submit"/>
+</form>
+</center>
+</div>
+
+</body>
+</html>
